@@ -1,0 +1,10 @@
+- name: Include main vars
+  ansible.builtin.include_vars:
+    file: vars.yml
+
+- name: installing awesome
+  become: true
+  apt:
+    name: awesome
+    state: present
+    update_cache: yes

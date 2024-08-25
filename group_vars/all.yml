@@ -1,0 +1,36 @@
+default_roles:
+  - system
+  # - alacrity
+  - wezterm
+  - awesome
+  - zsh
+  - docker
+  # - fonts
+  - fzf
+  - git
+  - go
+  - npm
+  - nvm
+  - python
+  - ruby
+  - rust
+  - lua
+  - neofetch
+  - neovim
+  - tmux
+  - ssh
+  - sshfs
+  - tldr
+  # - gcloud
+  # - brave
+  # - obsidian
+  # - dbeaver
+  # - bruno
+
+
+username: "cyf0rk"
+email: "marijanbatarilo.dev@gmail.com"
+ssh_key_filename: "id_cyf0rk_rsa"
+home: "{{ lookup('ansible.builtin.env', 'HOME') }}"
+personal: "{{ home }}/personal"
+dev: "{{ personal }}/dev"

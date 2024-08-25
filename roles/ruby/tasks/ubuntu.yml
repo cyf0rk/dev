@@ -1,0 +1,9 @@
+---
+- name: "Ruby | Install"
+  ansible.builtin.apt:
+    name:
+      - ruby
+      - ruby-dev
+      - rubygems
+    state: latest
+  become: true

@@ -1,0 +1,27 @@
+- name: Ensure Zsh with dependencies are installed
+  apt:
+    name: zsh
+    state: present
+    update_cache: yes
+  become: true
+
+- name: Ensure zsh is the default shell
+  user:
+    name: "{{ username }}"
+    shell: "/usr/bin/zsh"
+  become: true
+
+- name: Download Oh My Zsh installation script
+  get_url:
+    url: https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh
+    dest: /tmp/install_ohmyzsh.sh
+
+- name: Run Oh My Zsh installation script
+  command: sh /tmp/install_ohmyzsh.sh --unattended
+  register: ohmyzsh_result
+  failed_when: "'FAILED' in ohmyzsh_result.stderr"
+
+  # TODO: figure out how to set zsh as default shell
+- name: sets default shell to zsh
+  become: true
+  ansible.builtin.command: chsh -s /usr/bin/zsh
