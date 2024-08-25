@@ -1,6 +1,9 @@
-- name: My first play
+- name: Dev setup play
   hosts: localhost
   connection: local
+
+  vars:
+    distribution_name: "{{ 'Ubuntu' if ansible_distribution == 'Pop!_OS' else ansible_distribution }}"
 
   pre_tasks:
     - name: Detect Host User
@@ -9,6 +12,12 @@
         - always
 
   tasks:
+    - name: Display distribution name
+      debug:
+        msg: "Distribution: {{ distribution_name }}"
+      tags:
+        - always
+
     - name: Set roles
       ansible.builtin.set_fact:
         run_roles: "{{ ansible_run_tags != ['all'] and ansible_run_tags or default_roles | difference(exclude_roles | default([])) | sort }}"

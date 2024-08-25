@@ -8,5 +8,5 @@ Currently supporting only `Ubuntu` but additional distros can be added for each 
 1. Get ansible on your system asap
 
 ```
-curl https://raw.githubusercontent.com/cyf0rk/dev/master/resources/setup | sh
+curl https://raw.githubusercontent.com/cyf0rk/dev/master/bin/dev | sh
 ```
