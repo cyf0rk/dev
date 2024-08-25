@@ -7,7 +7,7 @@
 
 - name: Ensure zsh is the default shell
   user:
-    name: "{{ username }}"
+    name: "{{ host_user }}"
     shell: "/usr/bin/zsh"
   become: true
 
