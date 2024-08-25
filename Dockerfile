@@ -35,7 +35,7 @@ RUN mkdir -p /etc/sudoers.d && \
 RUN chown -R ${USER}:${group} /home/${USER}
 USER ${USER}
 
-COPY --chown=${USER}:${group} bin/dev /home/${USER}/dev
+COPY --chown=${USER}:${group} bin/dev /home/${USER}/.local/bin/dev
 
 RUN \
   mkdir -p /home/${USER}/.ansible-vault && \
@@ -44,10 +44,10 @@ RUN \
 
 # RUN bash -c "$(curl -fsSL https://raw.githubusercontent.com/cyf0rk/dev/main/bin/dev)"
 RUN git clone --quiet https://github.com/cyf0rk/dev.git /home/${USER}/dev
-RUN bash -c "/home/${USER}/dev"
+RUN bash -c "/home/${USER}/.local/bin/dev"
 
 RUN rm ~/.ansible-vault/vault.secret
 
-# CMD []
-#
-# ENTRYPOINT ["/bin/bash"]
+CMD []
+
+ENTRYPOINT ["/bin/bash"]
