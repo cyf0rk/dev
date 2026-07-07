@@ -1,0 +1,8 @@
+---
+# neofetch is archived upstream and its brew formula was removed —
+# fastfetch is the maintained successor (note: doesn't read the
+# neofetch config this role copies; it uses ~/.config/fastfetch/)
+- name: "Install"
+  community.general.homebrew:
+    name: fastfetch
+    state: present

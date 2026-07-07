@@ -1,0 +1,7 @@
+---
+# Docker Desktop bundles engine, CLI, buildx and compose on macOS —
+# no daemon/systemd/group setup needed
+- name: "Install Docker Desktop"
+  community.general.homebrew_cask:
+    name: docker-desktop
+    state: present

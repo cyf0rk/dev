@@ -1,6 +1,6 @@
 ---
 - name: "Run {{ distribution_name }} Tasks"
-  ansible.builtin.import_tasks: "{{ distribution_name }}.yml"
+  ansible.builtin.include_tasks: "{{ distribution_name }}.yml"
 
 - name: "Install Packages"
   import_tasks: packages.yml

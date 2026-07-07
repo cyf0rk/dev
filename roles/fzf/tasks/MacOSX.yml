@@ -1,0 +1,7 @@
+---
+# brew tracks fzf upstream closely — no need for the git-clone install
+# used on Ubuntu where the apt package lags
+- name: "Install"
+  community.general.homebrew:
+    name: fzf
+    state: present

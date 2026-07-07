@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+#
+# drift — compare installed Homebrew packages against what the setup declares.
+#
+#   drift            interactive: keep / uninstall / ignore each undeclared pkg
+#   drift --check    report only, exit 1 if drift found (for cron/CI)
+#
+# Declared = homebrew_packages/homebrew_casks lists in roles/*/vars/MacOSX.yml
+# plus the dotfiles Brewfile. Ignored names live in .driftignore (repo root).
+
+set -euo pipefail
+
+DEV_DIR="${DEV_DIR:-$HOME/dev}"
+BREWFILE="${BREWFILE:-$HOME/.dotfiles/homebrew/Brewfile}"
+IGNORE_FILE="$DEV_DIR/.driftignore"
+
+[[ "$(uname -s)" == Darwin ]] || { echo "drift is macOS-only for now" >&2; exit 1; }
+
+CHECK=0
+[[ "${1:-}" == "--check" ]] && CHECK=1
+
+# yaml_list FILE KEY — print items of KEY's list, one per line
+yaml_list() {
+  awk -v key="$2" '
+    $0 ~ "^"key":" { insec = ($0 !~ /\[\]/); next }
+    insec && /^[a-zA-Z_]+:/ { insec = 0 }
+    insec && $1 == "-" { print $2 }
+  ' "$1"
+}
+
+declared_formulae() {
+  local f
+  for f in "$DEV_DIR"/roles/*/vars/MacOSX.yml; do
+    [[ -f $f ]] && yaml_list "$f" homebrew_packages
+  done
+  # Brewfile: brew "tap/name" -> name
+  [[ -f $BREWFILE ]] && sed -n 's/^brew "\([^"]*\)".*/\1/p' "$BREWFILE" | awk -F/ '{print $NF}'
+}
+
+declared_casks() {
+  local f
+  for f in "$DEV_DIR"/roles/*/vars/MacOSX.yml; do
+    [[ -f $f ]] && yaml_list "$f" homebrew_casks
+  done
+  [[ -f $BREWFILE ]] && sed -n 's/^cask "\([^"]*\)".*/\1/p' "$BREWFILE" | awk -F/ '{print $NF}'
+}
+
+ignored() { [[ -f $IGNORE_FILE ]] && grep -v '^#' "$IGNORE_FILE" || true; }
+
+# sorted set difference: lines in $1 not in $2 or $3
+minus() { comm -23 <(echo "$1" | sort -u) <(printf '%s\n%s\n' "$2" "$3" | sort -u); }
+
+# leaves = explicitly requested top-level formulae (tap prefix stripped);
+# all = everything present, deps included — used for the "missing" check so
+# formulae pulled in as dependencies don't show as not installed
+installed_f="$(brew leaves --installed-on-request | awk -F/ '{print $NF}')"
+installed_all_f="$(brew list --formula)"
+installed_c="$(brew list --cask 2>/dev/null || true)"
+decl_f="$(declared_formulae)"
+decl_c="$(declared_casks)"
+ign="$(ignored)"
+
+undeclared_f="$(minus "$installed_f" "$decl_f" "$ign")"
+undeclared_c="$(minus "$installed_c" "$decl_c" "$ign")"
+missing_f="$(minus "$decl_f" "$installed_all_f" "")"
+missing_c="$(minus "$decl_c" "$installed_c" "")"
+
+drift_found=0
+
+report() { # report LABEL LIST
+  [[ -z $2 ]] && return 0
+  drift_found=1
+  echo "== $1 =="
+  echo "$2" | sed 's/^/  /'
+}
+
+prompt_each() { # prompt_each LIST CASK_FLAG
+  local pkg flag=$2
+  [[ -z $1 ]] && return 0
+  while IFS= read -r pkg; do
+    printf '%s — [k]eep / [u]ninstall / [i]gnore / [s]kip? ' "$pkg"
+    read -r ans </dev/tty
+    case "$ans" in
+      k) "$DEV_DIR/bin/keep" --no-install ${flag:+--cask} "$pkg" ;;
+      u) brew uninstall ${flag:+--cask} "$pkg" ;;
+      i) echo "$pkg" >> "$IGNORE_FILE" ;;
+      *) echo "  skipped" ;;
+    esac
+  done <<< "$1"
+}
+
+report "installed but undeclared (formulae)" "$undeclared_f"
+report "installed but undeclared (casks)" "$undeclared_c"
+report "declared but not installed (formulae)" "$missing_f"
+report "declared but not installed (casks)" "$missing_c"
+
+if [[ $drift_found -eq 0 ]]; then
+  echo "no drift — machine matches setup"
+  exit 0
+fi
+
+if [[ $CHECK -eq 1 ]]; then
+  exit 1
+fi
+
+echo
+prompt_each "$undeclared_f" ""
+prompt_each "$undeclared_c" "cask"
+
+if [[ -n $missing_f$missing_c ]]; then
+  echo
+  echo "to install missing declared packages, run:"
+  echo "  ansible-playbook $DEV_DIR/main.yml --tags packages"
+fi

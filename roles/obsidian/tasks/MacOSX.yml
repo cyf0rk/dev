@@ -1,0 +1,10 @@
+---
+- name: "Install"
+  community.general.homebrew_cask:
+    name: obsidian
+    state: present
+
+- name: "Create vaults dir"
+  ansible.builtin.file:
+    path: "{{ ansible_user_dir }}/vaults"
+    state: directory

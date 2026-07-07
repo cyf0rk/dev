@@ -1,0 +1,6 @@
+---
+# brew ships current stable — skip the source build used on Ubuntu
+- name: "Install"
+  community.general.homebrew:
+    name: neovim
+    state: present

@@ -1,0 +1,6 @@
+---
+# the Ubuntu role downloads a musl Linux binary — brew has the client
+- name: "Install"
+  community.general.homebrew:
+    name: tldr
+    state: present

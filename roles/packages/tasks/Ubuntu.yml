@@ -1,0 +1,7 @@
+---
+- name: "Install apt packages"
+  ansible.builtin.apt:
+    name: "{{ apt_packages }}"
+    state: present
+  become: true
+  when: apt_packages | length > 0

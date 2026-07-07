@@ -1,0 +1,25 @@
+---
+- name: "Upgrade Homebrew packages"
+  community.general.homebrew:
+    update_homebrew: true
+    upgrade_all: true
+
+# open-iscsi/light/pavucontrol are Linux hardware/audio tools — no macOS equivalent needed
+- name: "Install"
+  community.general.homebrew:
+    name:
+      - jq
+      - htop
+      - stow
+      - ripgrep
+    state: present
+
+- name: "Install Flameshot"
+  community.general.homebrew_cask:
+    name: flameshot
+    state: present
+
+- name: "Create work dir"
+  ansible.builtin.file:
+    path: "{{ ansible_user_dir }}/work"
+    state: directory

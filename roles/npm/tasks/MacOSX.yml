@@ -1,0 +1,18 @@
+---
+- name: "Install Node.js with nvm"
+  shell: |
+    bash -ic "source ~/.nvm/nvm.sh && nvm install node"
+  args:
+    creates: ~/.nvm/versions/node
+
+- name: "Set default Node.js version"
+  shell: |
+    bash -ic "source ~/.nvm/nvm.sh && nvm alias default node"
+  args:
+    creates: ~/.nvm/alias/default
+
+- name: "Verify npm installation"
+  shell: |
+    bash -ic "source ~/.nvm/nvm.sh && nvm --version"
+  register: npm_version
+  failed_when: npm_version.stdout == ''

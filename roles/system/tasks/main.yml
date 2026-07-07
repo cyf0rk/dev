@@ -1,10 +1,13 @@
 ---
 - name: "Run {{ distribution_name }} Tasks"
-  ansible.builtin.import_tasks: "{{ distribution_name }}.yml"
+  ansible.builtin.include_tasks: "{{ distribution_name }}.yml"
 
+# hosts.j2 is Debian-flavored (127.0.1.1, ip6-* aliases) and would drop
+# macOS's required broadcasthost entry — Linux only
 - name: "Set hosts"
   ansible.builtin.template:
     dest: "/etc/hosts"
     src: hosts.j2
     mode: "0644"
   become: true
+  when: ansible_os_family != 'Darwin'

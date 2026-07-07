@@ -1,0 +1,8 @@
+---
+# Font casks live in the main homebrew/cask repo since mid-2024 — no tap needed
+- name: "Install fonts"
+  community.general.homebrew_cask:
+    name:
+      - font-fira-code
+      - font-ubuntu-mono-nerd-font
+    state: present

@@ -146,6 +146,37 @@ function arch_setup() {
   _cmd "sudo localectl set-locale LANG=en_US.UTF-8"
 }
 
+function darwin_setup() {
+  if ! xcode-select -p >/dev/null 2>&1; then
+    __task "Installing Xcode Command Line Tools (accept the GUI dialog)"
+    xcode-select --install >/dev/null 2>&1 || true
+    until xcode-select -p >/dev/null 2>&1; do
+      sleep 10
+    done
+  fi
+
+  if ! [ -x "$(command -v brew)" ]; then
+    if [ -x /opt/homebrew/bin/brew ]; then
+      eval "$(/opt/homebrew/bin/brew shellenv)"
+    elif [ -x /usr/local/bin/brew ]; then
+      eval "$(/usr/local/bin/brew shellenv)"
+    else
+      __task "Installing Homebrew"
+      _cmd 'NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+      if [ -x /opt/homebrew/bin/brew ]; then
+        eval "$(/opt/homebrew/bin/brew shellenv)"
+      else
+        eval "$(/usr/local/bin/brew shellenv)"
+      fi
+    fi
+  fi
+
+  if ! [ -x "$(command -v ansible)" ]; then
+    __task "Installing Ansible"
+    _cmd "brew install ansible"
+  fi
+}
+
 update_ansible_galaxy() {
   local os=$1
   local os_requirements=""
@@ -157,7 +188,11 @@ update_ansible_galaxy() {
   _cmd "ansible-galaxy install -r $DEV_DIR/requirements/common.yml $os_requirements"
 }
 
-source /etc/os-release
+if [ "$(uname -s)" = "Darwin" ]; then
+  ID=MacOSX
+else
+  source /etc/os-release
+fi
 __task "Loading Setup for detected OS: $ID"
 case $ID in
   ubuntu | pop)
@@ -165,6 +200,9 @@ case $ID in
     ;;
   arch)
     arch_setup
+    ;;
+  MacOSX)
+    darwin_setup
     ;;
   *)
     __task "Unsupported OS"

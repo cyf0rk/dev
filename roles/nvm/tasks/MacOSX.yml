@@ -1,0 +1,23 @@
+---
+- name: "Create ~/.nvm directory if it doesn't exist"
+  file:
+    path: "{{ ansible_user_dir }}/.nvm"
+    state: directory
+
+- name: "Download Latest Version JSON"
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/nvm-sh/nvm/releases/latest
+  register: nvm_latest_version_json
+  changed_when: false
+  check_mode: false # read-only GET — must run in --check too, later tasks need the result
+
+- name: "Registering NVM Latest Release"
+  ansible.builtin.set_fact:
+    nvm_latest_release: "{{ nvm_latest_version_json.json.tag_name }}"
+
+- name: "Install"
+  ansible.builtin.shell: >
+    set -o pipefail && curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/{{ nvm_latest_release }}/install.sh | bash
+  args:
+    creates: "{{ ansible_user_dir }}/.nvm/nvm.sh"
+    executable: /bin/bash

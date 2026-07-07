@@ -1,0 +1,6 @@
+---
+# rust formula = rustc + cargo, matching the Ubuntu apt install
+- name: "Install"
+  community.general.homebrew:
+    name: rust
+    state: present

@@ -1,0 +1,6 @@
+---
+- name: "Load {{ distribution_name }} package lists"
+  ansible.builtin.include_vars: "{{ distribution_name }}.yml"
+
+- name: "Run {{ distribution_name }} Tasks"
+  ansible.builtin.include_tasks: "{{ distribution_name }}.yml"

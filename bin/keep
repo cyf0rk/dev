@@ -1,0 +1,111 @@
+#!/usr/bin/env bash
+#
+# keep — install a package AND record it in the ansible setup, one step.
+#
+#   keep ripgrep jq          install formulae, record in packages role
+#   keep --cask raycast      install cask, record in packages role
+#   keep --no-install btop   record only (already installed / drift adoption)
+#
+# Packages land in roles/packages/vars/<distro>.yml. Commits the change
+# to the dev repo so the setup always reflects the machine.
+
+set -euo pipefail
+
+DEV_DIR="${DEV_DIR:-$HOME/dev}"
+
+usage() {
+  grep '^#' "$0" | sed 's/^# \{0,1\}//' | tail -n +2
+  exit "${1:-0}"
+}
+
+CASK=0
+INSTALL=1
+PKGS=()
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --cask) CASK=1 ;;
+    --no-install) INSTALL=0 ;;
+    -h|--help) usage ;;
+    -*) echo "unknown flag: $1" >&2; usage 1 ;;
+    *) PKGS+=("$1") ;;
+  esac
+  shift
+done
+[[ ${#PKGS[@]} -eq 0 ]] && usage 1
+
+case "$(uname -s)" in
+  Darwin)
+    VARS_FILE="$DEV_DIR/roles/packages/vars/MacOSX.yml"
+    if [[ $CASK -eq 1 ]]; then KEY="homebrew_casks"; else KEY="homebrew_packages"; fi
+    ;;
+  Linux)
+    VARS_FILE="$DEV_DIR/roles/packages/vars/Ubuntu.yml"
+    KEY="apt_packages"
+    [[ $CASK -eq 1 ]] && { echo "--cask is macOS-only" >&2; exit 1; }
+    ;;
+  *) echo "unsupported OS: $(uname -s)" >&2; exit 1 ;;
+esac
+
+[[ -f $VARS_FILE ]] || { echo "vars file not found: $VARS_FILE" >&2; exit 1; }
+
+# yaml_has FILE KEY ITEM — is ITEM already in KEY's list?
+yaml_has() {
+  awk -v key="$2" -v item="$3" '
+    $0 ~ "^"key":" { insec = ($0 !~ /\[\]/); next }
+    insec && /^[a-zA-Z_]+:/ { insec = 0 }
+    insec && $1 == "-" && $2 == item { found = 1; exit }
+    END { exit found ? 0 : 1 }
+  ' "$1"
+}
+
+# yaml_add FILE KEY ITEM — append ITEM to KEY's list (handles "key: []")
+yaml_add() {
+  local tmp
+  tmp="$(mktemp "$1.tmp.XXXXXX")"
+  awk -v key="$2" -v item="$3" '
+    !done && $0 == key": []" { print key":"; print "  - " item; done = 1; next }
+    { print }
+    !done && $0 == key":" { print "  - " item; done = 1 }
+  ' "$1" > "$tmp"
+  mv "$tmp" "$1"
+}
+
+grep -q "^${KEY}:" "$VARS_FILE" || { echo "key '${KEY}' missing in $VARS_FILE" >&2; exit 1; }
+
+is_installed() {
+  if [[ "$(uname -s)" == Darwin ]]; then
+    if [[ $CASK -eq 1 ]]; then brew list --cask "$1" &>/dev/null
+    else brew list --formula "$1" &>/dev/null; fi
+  else
+    dpkg -s "$1" &>/dev/null
+  fi
+}
+
+install_pkg() {
+  if [[ "$(uname -s)" == Darwin ]]; then
+    if [[ $CASK -eq 1 ]]; then brew install --cask "$1"; else brew install "$1"; fi
+  else
+    sudo apt-get install -y "$1"
+  fi
+}
+
+RECORDED=()
+for pkg in "${PKGS[@]}"; do
+  if [[ $INSTALL -eq 1 ]] && ! is_installed "$pkg"; then
+    echo "==> installing $pkg"
+    install_pkg "$pkg"
+  fi
+  if yaml_has "$VARS_FILE" "$KEY" "$pkg"; then
+    echo "==> $pkg already declared in $KEY"
+  else
+    yaml_add "$VARS_FILE" "$KEY" "$pkg"
+    echo "==> recorded $pkg in ${VARS_FILE#"$DEV_DIR"/} ($KEY)"
+    RECORDED+=("$pkg")
+  fi
+done
+
+if [[ ${#RECORDED[@]} -gt 0 ]]; then
+  git -C "$DEV_DIR" add "$VARS_FILE"
+  git -C "$DEV_DIR" commit --quiet -m "keep: ${RECORDED[*]}"
+  echo "==> committed: keep: ${RECORDED[*]}"
+fi

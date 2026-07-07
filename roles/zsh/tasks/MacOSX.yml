@@ -1,0 +1,18 @@
+---
+# zsh is the macOS default shell since Catalina — only Oh My Zsh needed
+- name: "Check for Oh My Zsh"
+  ansible.builtin.stat:
+    path: "{{ ansible_user_dir }}/.oh-my-zsh"
+  register: ohmyzsh_dir
+
+- name: "Download Oh My Zsh installation script"
+  ansible.builtin.get_url:
+    url: https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh
+    dest: /tmp/install_ohmyzsh.sh
+  when: not ohmyzsh_dir.stat.exists
+
+- name: "Run Oh My Zsh installation script"
+  ansible.builtin.command: sh /tmp/install_ohmyzsh.sh --unattended
+  args:
+    creates: "{{ ansible_user_dir }}/.oh-my-zsh"
+  when: not ohmyzsh_dir.stat.exists

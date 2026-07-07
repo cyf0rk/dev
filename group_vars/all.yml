@@ -1,4 +1,5 @@
 default_roles:
+  - packages
   - system
   - ssh
   - sshfs
@@ -30,6 +31,14 @@ default_roles:
   # - dbeaver
   # - discord
   # - slack
+
+# Roles that only make sense on one platform — filtered out in main.yml
+darwin_exclude_roles:
+  - awesome
+  - flatpak
+  - screenlock
+  - sshfs # needs closed-source macFUSE, install manually if ever needed
+linux_exclude_roles: []
 
 home: "{{ lookup('ansible.builtin.env', 'HOME') }}"
 dev: "{{ home }}/dev"

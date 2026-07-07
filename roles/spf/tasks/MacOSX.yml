@@ -1,0 +1,6 @@
+---
+# superfile has a brew formula — no curl|sh needed on macOS
+- name: "Install"
+  community.general.homebrew:
+    name: superfile
+    state: present

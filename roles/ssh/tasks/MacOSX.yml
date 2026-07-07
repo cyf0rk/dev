@@ -1,0 +1,13 @@
+---
+- name: Create .ssh directory
+  ansible.builtin.file:
+    path: "{{ ansible_user_dir }}/.ssh"
+    state: directory
+    mode: '0700'
+
+- name: Copy SSH config template
+  ansible.builtin.template:
+    src: config.j2
+    dest: "{{ ansible_user_dir }}/.ssh/config"
+    mode: '0644'
+    force: false

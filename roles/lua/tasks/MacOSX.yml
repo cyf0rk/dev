@@ -1,0 +1,8 @@
+---
+- name: "Install Lua"
+  community.general.homebrew:
+    name:
+      - lua
+      - luajit
+      - luarocks
+    state: present

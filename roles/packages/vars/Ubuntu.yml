@@ -1,0 +1,5 @@
+---
+# Ad-hoc packages kept via `bin/keep`. Managed by script — keep the
+# two-space "  - name" list format. Promote entries to a dedicated
+# role when they grow config beyond a bare install.
+apt_packages: []

@@ -1,0 +1,6 @@
+---
+# brew python ships pip and venv built in
+- name: "Install"
+  community.general.homebrew:
+    name: python
+    state: present

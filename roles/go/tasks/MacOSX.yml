@@ -1,0 +1,7 @@
+---
+# brew tracks Go releases — no need for the manual latest-tarball
+# download used on Ubuntu
+- name: "Install"
+  community.general.homebrew:
+    name: go
+    state: present

@@ -9,3 +9,14 @@ tasks:
       vault_secret: "{{.vault_secret}}"
     cmds:
       - docker build -t devbox:latest .
+
+  drift:
+    desc: Reconcile installed packages vs setup (interactive)
+    interactive: true
+    cmds:
+      - ./bin/drift
+
+  drift-check:
+    desc: Report package drift only, exit 1 if any (cron-friendly)
+    cmds:
+      - ./bin/drift --check

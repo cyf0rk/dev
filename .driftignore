@@ -1,0 +1,2 @@
+# Packages drift should never nag about — one name per line.
+# Populated by choosing [i]gnore in `bin/drift`, or by hand.

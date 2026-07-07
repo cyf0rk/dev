@@ -1,0 +1,11 @@
+---
+- name: "Install"
+  community.general.homebrew_cask:
+    name: bruno
+    state: present
+
+- name: "Install Bruno CLI"
+  ansible.builtin.npm:
+    name: "@usebruno/cli"
+    state: present
+    global: yes

@@ -1,0 +1,5 @@
+---
+- name: "Install"
+  community.general.homebrew_cask:
+    name: telegram
+    state: present
